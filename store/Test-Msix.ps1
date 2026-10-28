@@ -3,6 +3,7 @@
 [CmdletBinding()]
 param([Parameter(Mandatory=$true)][string]$Package,[Parameter(Mandatory=$true)][string]$Output)
 $ErrorActionPreference='Stop'
+if($PSVersionTable.PSEdition -ne 'Desktop'){throw 'Appx deployment requires Windows PowerShell 5.1; PowerShell 7 is unsupported.'}
 if($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_ENVIRONMENT -ne 'github-hosted' -or $env:RUNNER_OS -ne 'Windows'){throw 'This test may run only on a disposable GitHub-hosted Windows runner.'}
 $name='Radici.Genealogy.Development'
 if(Get-AppxPackage -Name $name){throw 'An existing package must never be replaced by the CI test.'}

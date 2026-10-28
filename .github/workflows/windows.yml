@@ -146,7 +146,8 @@ jobs:
           }
       - name: Install, open, close and remove the MSIX in an isolated VM
         if: github.event_name != 'workflow_dispatch' || !inputs.store_package
-        shell: pwsh
+        # Appx deployment cmdlets require Windows PowerShell, not PowerShell 7.
+        shell: powershell
         run: |
           $package=Get-ChildItem .build/windows/store-output/*-BOZZA-NON-INSTALLABILE.msix | Select-Object -First 1 -ExpandProperty FullName
           ./store/Test-Msix.ps1 -Package $package -Output .build/windows/store-test
