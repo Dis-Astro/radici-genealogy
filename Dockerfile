@@ -11,7 +11,7 @@ ADD --checksum=sha256:8c7cb322801934537be9781b2c3bf8d50595591494eed5ac6d76b0dc3e
 RUN echo '8c7cb322801934537be9781b2c3bf8d50595591494eed5ac6d76b0dc3eb0a81e  /tmp/gramps.zip' | sha256sum -c - \
     && python3 -m zipfile -e /tmp/gramps.zip /opt \
     && mv /opt/gramps-6.0.8 /opt/gramps && rm /tmp/gramps.zip \
-    && mkdir /data /media /backups && chown radici:radici /data /media /backups
+    && mkdir -p /data /media /backups && chown radici:radici /data /media /backups
 ADD --checksum=sha256:90005e959e1596c6e6c84c8b0ad383285b3e17011751cedd17f2ce8fcdfc86de https://files.pythonhosted.org/packages/55/f2/7ebe366f633f30a6ad105f650f44f24f98cb1335c4157d21ae47138b3482/pypdf-6.10.0-py3-none-any.whl /tmp/pypdf.whl
 RUN python3 -m zipfile -e /tmp/pypdf.whl /opt/radici/python-libs && rm /tmp/pypdf.whl
 WORKDIR /opt/radici

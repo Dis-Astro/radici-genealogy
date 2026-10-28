@@ -73,7 +73,7 @@ def fetch(item):
 def microsoft_signature(path):
     # Only inspect the publisher; never modify trust or run the redistributable here.
     command = "$s=Get-AuthenticodeSignature -LiteralPath $env:RADICI_VERIFY_FILE; if($s.Status -ne 'Valid' -or $s.SignerCertificate.Subject -notmatch 'O=Microsoft Corporation'){throw 'Invalid Microsoft signature'}"
-    subprocess.run(['powershell.exe', '-NoProfile', '-Command', command], env={**os.environ, 'RADICI_VERIFY_FILE': str(path)}, check=True)
+    subprocess.run([shutil.which('pwsh') or 'powershell.exe', '-NoProfile', '-Command', command], env={**os.environ, 'RADICI_VERIFY_FILE': str(path)}, check=True)
 
 
 def prepare():
@@ -153,7 +153,7 @@ def verify_signatures(paths):
         raise ValueError('Missing expected production signing certificate thumbprint')
     request = WORK / 'verify-request.json'
     request.write_text(json.dumps({'files': [str(path.resolve()) for path in paths]}), encoding='utf-8')
-    subprocess.run(['powershell.exe', '-NoProfile', '-File', str(ROOT / 'desktop/Verify-Authenticode.ps1'), '-Manifest', str(request), '-CertificateThumbprint', thumb], check=True)
+    subprocess.run([shutil.which('pwsh') or 'powershell.exe', '-NoProfile', '-File', str(ROOT / 'desktop/Verify-Authenticode.ps1'), '-Manifest', str(request), '-CertificateThumbprint', thumb], check=True)
 
 
 def source_archive(destination):
