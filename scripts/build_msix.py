@@ -218,4 +218,5 @@ if __name__ == '__main__':
             ('publisher_display_name','STORE_PUBLISHER_DISPLAY_NAME'),('display_name','STORE_DISPLAY_NAME'))})
     else:
         identity=identity_from_json(args.store_identity,args.development)
+    STAGE=WORK/('msix-stage-development' if args.development else 'msix-stage-store')
     build(identity,args.development,args.makeappx)
