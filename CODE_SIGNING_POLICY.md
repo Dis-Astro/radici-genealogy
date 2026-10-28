@@ -1,6 +1,6 @@
 # Code signing policy
 
-Status: application preparation, **not accepted or signed by SignPath Foundation**. This is the proposed policy, subject to Foundation review. The project is new and does not claim established public reputation.
+Status: application submitted on 28 October 2026; receipt confirmed by the application form; awaiting review, **not accepted or signed by SignPath Foundation**. This is the proposed policy, subject to Foundation review. The project is new and does not claim established public reputation.
 
 ## Responsibilities
 
