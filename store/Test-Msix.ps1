@@ -51,7 +51,7 @@ public static class RadiciActivate {
     while(-not (Test-Path -LiteralPath $reportPath) -and (Get-Date) -lt $limit){Start-Sleep -Milliseconds 500}
     if(-not (Test-Path -LiteralPath $reportPath)){throw 'The packaged desktop window did not report successful navigation.'}
     $window=Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
-    if(-not $window.ready -or $window.package_identity -notlike 'Radici.Genealogy.Development_*'){throw 'The app did not run with the expected package identity.'}
+    if(-not $window.ready -or -not $window.interface_ready -or $window.package_identity -notlike 'Radici.Genealogy.Development_*'){throw 'The app did not load its interface with the expected package identity.'}
     if([System.IO.Path]::GetFullPath($window.data_root) -ne [System.IO.Path]::GetFullPath($dataPath)){throw 'The app used an unexpected data folder.'}
     if(-not (Test-Path -LiteralPath (Join-Path $dataPath 'Dati\trees.json'))){throw 'The actual archive was hidden in package virtualization.'}
     if($appProcess -and -not $appProcess.WaitForExit(40000)){throw 'Graceful application shutdown did not complete.'}

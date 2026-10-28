@@ -28,7 +28,7 @@ class RadiciDesktop : Form {
  Process engine;
  WebView2 browser;
  string endpoint,token;
- bool starting,closing,allowClose,firstUseChecked,importing;
+ bool starting,closing,allowClose,firstUseChecked,importing,checkingSmoke;
  volatile bool cancelImport;
  [DllImport("ntdll.dll",CharSet=CharSet.Unicode)]static extern int RtlGetVersion(ref OSVERSION value);
  [StructLayout(LayoutKind.Sequential,CharSet=CharSet.Unicode)]struct OSVERSION {public int Size,Major,Minor,Build,Platform;[MarshalAs(UnmanagedType.ByValTStr,SizeConst=128)]public string ServicePack;}
@@ -71,7 +71,7 @@ class RadiciDesktop : Form {
   runtimeHelp.SetBounds(44,316,494,48);runtimeHelp.Text="Scarica il componente grafico Microsoft";runtimeHelp.Visible=false;runtimeHelp.Click+=(s,e)=>{try{Process.Start(new ProcessStartInfo("https://developer.microsoft.com/microsoft-edge/webview2/#download-section"){UseShellExecute=true});}catch(Exception ex){ShowError(ex.Message);}};
   loading.Controls.AddRange(new Control[]{heading,status,progress,retry,logs,runtimeHelp});Controls.Add(loading);Controls.Add(bar);
   wakeTimer.Interval=400;wakeTimer.Tick+=(s,e)=>{if(wake.WaitOne(0)){Show();WindowState=FormWindowState.Normal;Activate();}};wakeTimer.Start();
-  Shown+=async(s,e)=>await Start();FormClosing+=async(s,e)=>{if(allowClose)return;e.Cancel=true;if(importing){cancelImport=true;status.Text="Annullamento della copia…";return;}if(closing)return;await Stop();};
+  Shown+=async(s,e)=>{if(screenshot!=null){Location=Point.Empty;ClientSize=new Size(1440,960);}await Start();};FormClosing+=async(s,e)=>{if(allowClose)return;e.Cancel=true;if(importing){cancelImport=true;status.Text="Annullamento della copia…";return;}if(closing)return;await Stop();};
  }
  async Task Start(){
   if(!firstUseChecked&&smoke==null&&ArchiveImport.PackageIdentity()!=""&&!File.Exists(Path.Combine(archive,"Dati/trees.json"))){
@@ -134,7 +134,24 @@ class RadiciDesktop : Form {
    browser.CoreWebView2.NavigationStarting+=(s,e)=>{Uri uri;if(!Uri.TryCreate(e.Uri,UriKind.Absolute,out uri)||uri.GetLeftPart(UriPartial.Authority)!=endpoint)e.Cancel=true;};
    browser.CoreWebView2.WebMessageReceived+=(s,e)=>{if(e.Source.StartsWith(endpoint+"/",StringComparison.Ordinal)&&e.TryGetWebMessageAsString()=="reconnect")browser.CoreWebView2.Navigate(endpoint+"/?avvio="+Uri.EscapeDataString(token));};
    browser.CoreWebView2.ProcessFailed+=(s,e)=>ShowError("La finestra grafica si è fermata. I dati già salvati sono conservati. Premi Riprova.");
-   browser.CoreWebView2.NavigationCompleted+=async(s,e)=>{if(e.IsSuccess){loading.Visible=false;Log("Finestra pronta; versione "+Release+"; motore "+engine.Id+"; caricamento "+elapsed.Elapsed.TotalSeconds.ToString("0.0")+" s");try{if(screenshot!=null){await Task.Delay(700);using(var output=File.Create(screenshot))await browser.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,output);}if(smoke!=null)File.WriteAllText(smoke,json.Serialize(new{ready=true,version=Release,native_window=true,webview_navigation=true,worker_pid=engine.Id,data_root=archive,package_identity=ArchiveImport.PackageIdentity(),seconds=elapsed.Elapsed.TotalSeconds}));if(smokeExit)await Stop();}catch(Exception ex){ShowError("Controllo della finestra non completato: "+ex.Message);}}else ShowError("La finestra non è riuscita ad aprire l’archivio. Premi Riprova.");};
+   browser.CoreWebView2.NavigationCompleted+=async(s,e)=>{
+    if(!e.IsSuccess){ShowError("La finestra non è riuscita ad aprire l’archivio. Premi Riprova.");return;}
+    loading.Visible=false;Log("Finestra pronta; versione "+Release+"; motore "+engine.Id+"; caricamento "+elapsed.Elapsed.TotalSeconds.ToString("0.0")+" s");
+    if(smoke==null)return;
+    if(checkingSmoke)return;checkingSmoke=true;
+    try{
+     var uiTime=Stopwatch.StartNew();bool interfaceReady=false;
+     while(uiTime.Elapsed.TotalSeconds<45&&!closing){
+      string result=await browser.CoreWebView2.ExecuteScriptAsync("Boolean(document.getElementById('tree-picker')?.options.length && document.getElementById('view-caption')?.textContent && !document.getElementById('application').hidden)");
+      if(result=="true"){interfaceReady=true;break;}
+      await Task.Delay(200);
+     }
+     if(!interfaceReady)throw new IOException("L’interfaccia non ha completato il caricamento dei dati.");
+     if(screenshot!=null){using(var output=File.Create(screenshot))await browser.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,output);}
+     File.WriteAllText(smoke,json.Serialize(new{ready=true,version=Release,native_window=true,webview_navigation=true,interface_ready=true,worker_pid=engine.Id,data_root=archive,package_identity=ArchiveImport.PackageIdentity(),seconds=elapsed.Elapsed.TotalSeconds}));
+     if(smokeExit)await Stop();
+    }catch(Exception ex){ShowError("Controllo della finestra non completato: "+ex.Message);}
+   };
    browser.CoreWebView2.Navigate(endpoint+"/?avvio="+Uri.EscapeDataString(token));
   }catch(Exception ex){ShowError("Avvio non completato. "+ex.Message);}
   finally{starting=false;}
