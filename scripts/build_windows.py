@@ -17,7 +17,7 @@ DEPS = WORK / 'deps'
 BIN = WORK / 'bin'
 PROGRAM = WORK / 'program'
 DIST = WORK / 'dist'
-VERSION = '5.0.0'
+VERSION = '5.0.1'
 OWN_BINARIES = ('Radici.exe', 'RadiciMotore.exe', 'Disinstalla.exe')
 PRIVATE_PARTS = {'.git', '.secrets', '.build', 'runtime', '__pycache__', 'Dati', 'Foto', 'Stampe', 'Backup', 'Impostazioni', 'Registri', 'Temp'}
 PRIVATE_SUFFIXES = {'.db', '.log', '.gramps', '.gpkg', '.ged', '.pfx', '.p12', '.pyc'}
@@ -128,7 +128,7 @@ def compile_cs(source, target, extra=(), platform='x64'):
 def binaries():
     BIN.mkdir(parents=True, exist_ok=True)
     sdk = DEPS / 'sdk/lib/net462'
-    compile_cs('desktop/RadiciDesktop.cs', BIN / 'Radici.exe', ['/r:' + str(sdk / name) for name in ('Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll')])
+    compile_cs('desktop/RadiciDesktop.cs', BIN / 'Radici.exe', ['/r:' + str(sdk / name) for name in ('Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll')] + [str(ROOT/'desktop/ArchiveImport.cs')])
     compile_cs('portable/RadiciMotore.cs', BIN / 'RadiciMotore.exe')
     compile_cs('desktop/DisinstallaRadici.cs', BIN / 'Disinstalla.exe', platform='anycpu')
     if PROGRAM.exists():
@@ -194,7 +194,7 @@ def installer(development_unsigned=False):
     for name in ('LICENSE.txt', 'LICENSE', 'License.txt', 'NOTICE.txt'):
         if (sdk / name).is_file():
             add('Licenze/WebView2-' + name, sdk / name)
-    sources = WORK / 'Radici-5.0.0-sorgenti.zip'
+    sources = WORK / ('Radici-'+VERSION+'-sorgenti.zip')
     source_archive(sources)
     add('Sorgenti/' + sources.name, sources)
     for name in ('LICENSE', 'NOTICE'):

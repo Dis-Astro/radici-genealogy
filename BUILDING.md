@@ -27,3 +27,8 @@ The workflow stops if SignPath credentials, expected certificate, approved polic
 ## Linux / Docker
 
 The Dockerfile fetches and verifies the official Gramps 6.0.8 source. Run `docker build -t radici:test .`, followed by the native test command in `.github/workflows/test.yml`. Docker and Windows builds use the same application sources; their platform dependencies differ.
+
+
+## Microsoft Store / MSIX
+
+The current free distribution route is Microsoft Store. See [store/README.md](store/README.md) for development packages, real Partner Center identity binding and isolated package tests. SignPath signing is not required for Store packages.

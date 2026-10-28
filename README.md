@@ -2,7 +2,7 @@
 
 Radici è un'applicazione genealogica italiana pensata per chi ha poca esperienza con il computer: albero visivo, controlli grandi, compilazione guidata e stampe per album. Funziona localmente e usa il motore ufficiale **Gramps 6.0.8** tramite le sue API. È un progetto indipendente, non una release ufficiale Gramps.
 
-**Stato:** anteprima Windows 5.0.0. Il progetto è nuovo. La candidatura per la firma gratuita è stata inviata a SignPath Foundation il 28 ottobre 2026 e il sito ha confermato la ricezione. È in attesa di valutazione: nessuna approvazione o firma è dichiarata. Gli eseguibili di anteprima sono non firmati. Non eludere avvisi o protezioni del computer.
+**Stato:** anteprima desktop; preparazione MSIX 5.0.1 per la distribuzione gratuita tramite Microsoft Store. Il pacchetto deve ancora essere associato all’identità reale dell’editore e approvato da Microsoft. Le anteprime scaricabili restano non firmate. I dettagli di preparazione sono in [store/README.md](store/README.md).
 
 ## Funzioni
 
@@ -44,7 +44,7 @@ L'editor non copre tutte le funzioni del desktop Gramps: ad esempio gli eventi c
 
 ## Code signing policy
 
-[Code signing policy](CODE_SIGNING_POLICY.md): candidatura a **SignPath Foundation** inviata il 28 ottobre 2026, in attesa di valutazione. L'eventuale firma sarà abilitata soltanto dopo approvazione, integrazione del build verificato e autorizzazione del responsabile del rilascio.
+[Code signing policy](CODE_SIGNING_POLICY.md): la distribuzione gratuita in preparazione usa Microsoft Store/MSIX. L'eventuale firma sarà abilitata soltanto dopo approvazione, integrazione del build verificato e autorizzazione del responsabile del rilascio.
 
 ## Licenze, privacy e contributi
 

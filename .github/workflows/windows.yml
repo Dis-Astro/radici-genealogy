@@ -9,6 +9,10 @@ on:
         description: Request production SignPath signatures (approved project and policies required)
         type: boolean
         default: false
+      store_package:
+        description: Bind the MSIX to the real Partner Center identity (Store variables required)
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -44,6 +48,13 @@ jobs:
         run: python scripts/build_windows.py prepare
       - name: Build Radici-owned executables from public source
         run: python scripts/build_windows.py binaries
+      - name: Test first-use archive copying on synthetic files
+        shell: pwsh
+        run: |
+          & "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /nologo /target:exe /platform:x64 /r:System.Web.Extensions.dll /out:.build/windows/ArchiveImportTests.exe store/ArchiveImportTests.cs desktop/ArchiveImport.cs
+          if ($LASTEXITCODE -ne 0) { throw 'Archive import tests could not compile' }
+          & .build/windows/ArchiveImportTests.exe "$env:RUNNER_TEMP\radici-import-tests"
+          if ($LASTEXITCODE -ne 0) { throw 'Archive import safety tests failed' }
       - name: Test official Gramps engine and synthetic genealogy
         run: python scripts/build_windows.py test
       - name: Upload Radici binaries for origin verification
@@ -107,10 +118,49 @@ jobs:
           name: radici-desktop-result
           path: |
             .build/windows/dist/*
-            .build/windows/Radici-5.0.0-sorgenti.zip
+            .build/windows/Radici-*-sorgenti.zip
             .build/windows/build-report.json
             .build/windows/qa/native-tests.json
           if-no-files-found: error
+          retention-days: 30
+      - name: Build and validate a development MSIX
+        if: github.event_name != 'workflow_dispatch' || !inputs.store_package
+        run: python scripts/build_msix.py --development
+      - name: Build the package for the actual Microsoft Store identity
+        if: github.event_name == 'workflow_dispatch' && inputs.store_package
+        env:
+          STORE_IDENTITY_NAME: ${{ vars.STORE_IDENTITY_NAME }}
+          STORE_PUBLISHER: ${{ vars.STORE_PUBLISHER }}
+          STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
+          STORE_DISPLAY_NAME: ${{ vars.STORE_DISPLAY_NAME }}
+        run: python scripts/build_msix.py --store-environment
+      - name: Prepare official WebView2 on the disposable test VM if missing
+        if: github.event_name != 'workflow_dispatch' || !inputs.store_package
+        shell: pwsh
+        run: |
+          Add-Type -Path .build/windows/deps/sdk/lib/net462/Microsoft.Web.WebView2.Core.dll
+          try { $version=[Microsoft.Web.WebView2.Core.CoreWebView2Environment]::GetAvailableBrowserVersionString($null) } catch { $version=$null }
+          if (-not $version) {
+            $process=Start-Process -FilePath .build/windows/deps/webview2-runtime.exe -ArgumentList '/silent /install' -WindowStyle Hidden -PassThru -Wait
+            if ($process.ExitCode -ne 0 -and $process.ExitCode -ne 3010) { throw 'Official WebView2 prerequisite installation failed' }
+          }
+      - name: Install, open, close and remove the MSIX in an isolated VM
+        if: github.event_name != 'workflow_dispatch' || !inputs.store_package
+        shell: pwsh
+        run: |
+          $package=Get-ChildItem .build/windows/store-output/*-BOZZA-NON-INSTALLABILE.msix | Select-Object -First 1 -ExpandProperty FullName
+          ./store/Test-Msix.ps1 -Package $package -Output .build/windows/store-test
+      - name: Archive unsigned MSIX candidates and validation reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: radici-msix-result
+          path: |
+            .build/windows/store-output/*
+            .build/windows/store-test/integration-report.json
+            .build/windows/store-test/window-ready.json
+            .build/windows/store-test/window.png
+          if-no-files-found: warn
           retention-days: 30
       - name: Archive failure diagnostics using synthetic test data only
         if: failure()
@@ -121,4 +171,5 @@ jobs:
             .build/windows/qa/Registri/*.log
             .build/windows/qa/native-tests.json
             .build/windows/deps/extract.log
+            .build/windows/store-test/*.json
           retention-days: 7

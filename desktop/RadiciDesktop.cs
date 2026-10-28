@@ -15,19 +15,21 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
 class RadiciDesktop : Form {
- const string Release="5.0.0";
- readonly string program,archive,smoke;
+ const string Release="5.0.1";
+ readonly string program,archive,smoke,screenshot;
+ readonly bool smokeExit;
  readonly Label status=new Label();
  readonly Panel loading=new Panel();
  readonly ProgressBar progress=new ProgressBar();
- readonly Button retry=new Button(),logs=new Button();
+ readonly Button retry=new Button(),logs=new Button(),runtimeHelp=new Button();
  readonly System.Windows.Forms.Timer wakeTimer=new System.Windows.Forms.Timer();
  readonly JavaScriptSerializer json=new JavaScriptSerializer();
  EventWaitHandle wake;
  Process engine;
  WebView2 browser;
  string endpoint,token;
- bool starting,closing,allowClose;
+ bool starting,closing,allowClose,firstUseChecked,importing;
+ volatile bool cancelImport;
  [DllImport("ntdll.dll",CharSet=CharSet.Unicode)]static extern int RtlGetVersion(ref OSVERSION value);
  [StructLayout(LayoutKind.Sequential,CharSet=CharSet.Unicode)]struct OSVERSION {public int Size,Major,Minor,Build,Platform;[MarshalAs(UnmanagedType.ByValTStr,SizeConst=128)]public string ServicePack;}
 
@@ -42,12 +44,12 @@ class RadiciDesktop : Form {
   bool first;using(var single=new Mutex(true,Key(data),out first)){
    if(!first){try{using(var existing=EventWaitHandle.OpenExisting(Key(data)+"-Show"))existing.Set();}catch{}return 0;}
    using(var signal=new EventWaitHandle(false,EventResetMode.AutoReset,Key(data)+"-Show"))
-   using(var form=new RadiciDesktop(program,data,Option(args,"--smoke-report",null),signal)){Application.Run(form);}
+   using(var form=new RadiciDesktop(program,data,Option(args,"--smoke-report",null),Option(args,"--smoke-screenshot",null),Array.IndexOf(args,"--smoke-exit")>=0,signal)){Application.Run(form);}
   }
   return 0;
  }
- RadiciDesktop(string folder,string data,string report,EventWaitHandle signal){
-  program=folder;archive=data;smoke=report;wake=signal;
+ RadiciDesktop(string folder,string data,string report,string image,bool exitAfterSmoke,EventWaitHandle signal){
+  program=folder;archive=data;smoke=report;screenshot=image;smokeExit=exitAfterSmoke;wake=signal;
   Text="Radici · La storia della tua famiglia";StartPosition=FormStartPosition.CenterScreen;
   Size=new Size(1280,850);MinimumSize=new Size(900,650);Font=new Font("Segoe UI",11);BackColor=Color.FromArgb(246,246,239);
   try{Icon=new Icon(Path.Combine(program,"Radici.ico"));}catch{}
@@ -63,11 +65,26 @@ class RadiciDesktop : Form {
   var heading=new Label{Text="Radici",Font=new Font("Georgia",32),AutoSize=true,Location=new Point(40,42),ForeColor=Color.FromArgb(38,73,52)};
   status.SetBounds(44,115,760,95);status.AutoEllipsis=false;status.Text="Preparazione dell’archivio…";
   progress.SetBounds(44,218,650,16);progress.Style=ProgressBarStyle.Marquee;progress.MarqueeAnimationSpeed=35;
-  retry.SetBounds(44,260,240,44);retry.Text="Riprova l’avvio";retry.Visible=false;retry.Click+=async(s,e)=>await Boot();
+  retry.SetBounds(44,260,240,44);retry.Text="Riprova l’avvio";retry.Visible=false;retry.Click+=async(s,e)=>await Start();
   logs.SetBounds(298,260,240,44);logs.Text="Apri il registro";logs.Visible=false;logs.Click+=(s,e)=>OpenFolder("Registri");
-  loading.Controls.AddRange(new Control[]{heading,status,progress,retry,logs});Controls.Add(loading);Controls.Add(bar);
+  runtimeHelp.SetBounds(44,316,494,48);runtimeHelp.Text="Scarica il componente grafico Microsoft";runtimeHelp.Visible=false;runtimeHelp.Click+=(s,e)=>{try{Process.Start(new ProcessStartInfo("https://developer.microsoft.com/microsoft-edge/webview2/#download-section"){UseShellExecute=true});}catch(Exception ex){ShowError(ex.Message);}};
+  loading.Controls.AddRange(new Control[]{heading,status,progress,retry,logs,runtimeHelp});Controls.Add(loading);Controls.Add(bar);
   wakeTimer.Interval=400;wakeTimer.Tick+=(s,e)=>{if(wake.WaitOne(0)){Show();WindowState=FormWindowState.Normal;Activate();}};wakeTimer.Start();
-  Shown+=async(s,e)=>await Boot();FormClosing+=async(s,e)=>{if(allowClose)return;e.Cancel=true;if(closing)return;await Stop();};
+  Shown+=async(s,e)=>await Start();FormClosing+=async(s,e)=>{if(allowClose)return;e.Cancel=true;if(importing){cancelImport=true;status.Text="Annullamento della copia…";return;}if(closing)return;await Stop();};
+ }
+ async Task Start(){
+  if(!firstUseChecked&&smoke==null&&ArchiveImport.PackageIdentity()!=""&&!File.Exists(Path.Combine(archive,"Dati/trees.json"))){
+   try{
+    status.Text="Preparazione del primo avvio…";string source=await Task.Run(()=>ArchiveImport.FindUsb());
+    string message=source!=""?"Ho trovato un archivio sulla chiavetta. Vuoi copiarlo sul PC?\n\nChiudi prima Radici sulla chiavetta. Sì: copia tutti gli alberi, foto, stampe e backup. No: inizia con un albero vuoto.\n\nLa chiavetta originale viene conservata.":"Hai già un archivio Radici su una chiavetta?\n\nSì: scegli la cartella da copiare. No: inizia con un albero vuoto.";
+    if(MessageBox.Show(this,message,"Benvenuto in Radici",MessageBoxButtons.YesNo,MessageBoxIcon.Question)==DialogResult.Yes){
+     if(source=="")using(var dialog=new FolderBrowserDialog{Description="Scegli la cartella Radici della chiavetta, che contiene Dati e Foto"}){if(dialog.ShowDialog(this)!=DialogResult.OK){ShowError("Copia annullata. Premi Riprova oppure chiudi Radici.");return;}source=dialog.SelectedPath;}
+     importing=true;cancelImport=false;await Task.Run(()=>ArchiveImport.Copy(source,archive,text=>{try{BeginInvoke((Action)(()=>status.Text=text));}catch{}},()=>cancelImport));
+    }
+    firstUseChecked=true;
+   }catch(OperationCanceledException){allowClose=true;Close();return;}catch(Exception ex){ShowError("La copia non è stata completata. "+ex.Message);return;}finally{importing=false;}
+  }
+  await Boot();
  }
  void Log(string message){try{Directory.CreateDirectory(Path.Combine(archive,"Registri"));File.AppendAllText(Path.Combine(archive,"Registri/desktop.log"),DateTime.Now.ToString("s")+" "+message+Environment.NewLine);}catch{}}
  void OpenFolder(string name){try{string path=Path.Combine(archive,name);Directory.CreateDirectory(path);Process.Start(new ProcessStartInfo(path){UseShellExecute=true});}catch(Exception ex){ShowError(ex.Message);}}
@@ -83,12 +100,12 @@ class RadiciDesktop : Form {
   try{var uri=new Uri(File.ReadAllText(Path.Combine(archive,"Impostazioni/pronto.txt")).Trim());if(uri.Scheme!="http"||uri.Host!="127.0.0.1"||!uri.Query.StartsWith("?avvio="))return false;endpoint=uri.GetLeftPart(UriPartial.Authority);token=Uri.UnescapeDataString(uri.Query.Substring(7));return token.Length>=20;}catch{return false;}
  }
  async Task Boot(){
-  if(starting||closing)return;starting=true;retry.Visible=logs.Visible=false;progress.Style=ProgressBarStyle.Marquee;loading.Visible=true;loading.BringToFront();
+  if(starting||closing)return;starting=true;retry.Visible=logs.Visible=runtimeHelp.Visible=false;progress.Style=ProgressBarStyle.Marquee;loading.Visible=true;loading.BringToFront();
   try{
    foreach(string name in new[]{"Dati","Foto","Stampe","Backup","Registri","Impostazioni","Temp"})Directory.CreateDirectory(Path.Combine(archive,name));
    foreach(string name in new[]{"Programma/RadiciMotore.exe","Programma/Runtime/libpython3.14.dll","Programma/Runtime/lib/library.zip","Programma/app/static/index.html"})if(!File.Exists(Path.Combine(program,name)))throw new IOException("Manca un componente del programma: "+name+". Riapri l’installatore per riparare Radici; gli alberi saranno conservati.");
-   string runtime=CoreWebView2Environment.GetAvailableBrowserVersionString();Version runtimeVersion;
-   if(!Version.TryParse(runtime.Split(' ')[0],out runtimeVersion)||runtimeVersion.Major<131)throw new IOException("Il componente grafico Microsoft WebView2 richiede un aggiornamento. Riapri l’installatore di Radici.");
+   string runtime;try{runtime=CoreWebView2Environment.GetAvailableBrowserVersionString();}catch(WebView2RuntimeNotFoundException){ShowError("Manca il componente grafico Microsoft WebView2. Premi Scarica, installa il componente dal sito Microsoft, poi premi Riprova.");runtimeHelp.Visible=true;return;}Version runtimeVersion;
+   if(!Version.TryParse(runtime.Split(' ')[0],out runtimeVersion)||runtimeVersion.Major<131){ShowError("Il componente grafico Microsoft richiede un aggiornamento. Premi Scarica, completa l’aggiornamento, poi premi Riprova.");runtimeHelp.Visible=true;return;}
    if(engine==null||engine.HasExited){
     if(engine!=null)engine.Dispose();endpoint=token=null;
     engine=Process.Start(new ProcessStartInfo(Path.Combine(program,"Programma/RadiciMotore.exe"),"\""+archive.TrimEnd('\\')+"\" --desktop"){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,WorkingDirectory=archive});
@@ -116,7 +133,7 @@ class RadiciDesktop : Form {
    browser.CoreWebView2.NavigationStarting+=(s,e)=>{Uri uri;if(!Uri.TryCreate(e.Uri,UriKind.Absolute,out uri)||uri.GetLeftPart(UriPartial.Authority)!=endpoint)e.Cancel=true;};
    browser.CoreWebView2.WebMessageReceived+=(s,e)=>{if(e.Source.StartsWith(endpoint+"/",StringComparison.Ordinal)&&e.TryGetWebMessageAsString()=="reconnect")browser.CoreWebView2.Navigate(endpoint+"/?avvio="+Uri.EscapeDataString(token));};
    browser.CoreWebView2.ProcessFailed+=(s,e)=>ShowError("La finestra grafica si è fermata. I dati già salvati sono conservati. Premi Riprova.");
-   browser.CoreWebView2.NavigationCompleted+=(s,e)=>{if(e.IsSuccess){loading.Visible=false;Log("Finestra pronta; versione "+Release+"; motore "+engine.Id+"; caricamento "+elapsed.Elapsed.TotalSeconds.ToString("0.0")+" s");if(smoke!=null)File.WriteAllText(smoke,json.Serialize(new{ready=true,version=Release,native_window=true,webview_navigation=true,worker_pid=engine.Id,data_root=archive,seconds=elapsed.Elapsed.TotalSeconds}));}else ShowError("La finestra non è riuscita ad aprire l’archivio. Premi Riprova.");};
+   browser.CoreWebView2.NavigationCompleted+=async(s,e)=>{if(e.IsSuccess){loading.Visible=false;Log("Finestra pronta; versione "+Release+"; motore "+engine.Id+"; caricamento "+elapsed.Elapsed.TotalSeconds.ToString("0.0")+" s");try{if(screenshot!=null){await Task.Delay(700);using(var output=File.Create(screenshot))await browser.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,output);}if(smoke!=null)File.WriteAllText(smoke,json.Serialize(new{ready=true,version=Release,native_window=true,webview_navigation=true,worker_pid=engine.Id,data_root=archive,package_identity=ArchiveImport.PackageIdentity(),seconds=elapsed.Elapsed.TotalSeconds}));if(smokeExit)await Stop();}catch(Exception ex){ShowError("Controllo della finestra non completato: "+ex.Message);}}else ShowError("La finestra non è riuscita ad aprire l’archivio. Premi Riprova.");};
    browser.CoreWebView2.Navigate(endpoint+"/?avvio="+Uri.EscapeDataString(token));
   }catch(Exception ex){ShowError("Avvio non completato. "+ex.Message);}
   finally{starting=false;}

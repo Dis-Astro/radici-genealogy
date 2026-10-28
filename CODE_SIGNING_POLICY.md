@@ -1,29 +1,31 @@
 # Code signing policy
 
-Status: application submitted on 28 October 2026; receipt confirmed by the application form; awaiting review, **not accepted or signed by SignPath Foundation**. This is the proposed policy, subject to Foundation review. The project is new and does not claim established public reputation.
+Current free distribution plan: **Microsoft Store signing of MSIX packages**. See [store/README.md](store/README.md). No Microsoft certification, approval or production signature is claimed before the corresponding Store process has completed. The historical SignPath workflow is inactive and no Foundation certificate has been granted.
 
 ## Responsibilities
 
-- Source repository owner, committer and reviewer: [Dis-Astro](https://github.com/Dis-Astro).
-- Release/signing approver: the repository owner, after review of the exact commit, passing CI, dependency licences and release artifacts. AI-assisted changes remain subject to the maintainer's review and responsibility.
-- Contributors cannot approve signing or access signing credentials. Maintainers must enable MFA for both GitHub and SignPath before production signing. This document does not assert that MFA or SignPath approval is already configured.
+- Repository owner, committer, reviewer and release approver: [Dis-Astro](https://github.com/Dis-Astro).
+- AI-assisted changes remain subject to the maintainer's review and responsibility.
+- Contributors cannot approve releases or access signing credentials. The maintainer reviews the exact commit, automated reports, identity and release files before submission.
 
-## Intended signing service
+## Production distribution
 
-Application: [SignPath Foundation](https://signpath.org/apply). If accepted, code signing is intended to be provided free by [SignPath.io](https://signpath.io), with the certificate issued to SignPath Foundation. **That service is not yet active for this project.** On acceptance, the project homepage and download page must display: "Free code signing provided by SignPath.io, certificate by SignPath Foundation".
+The MSIX builder uses the application identity assigned to the developer by Microsoft Partner Center. Empty values, template identities and the development identity are rejected for Store builds. The package is built from published source on GitHub-hosted Windows runners. Official dependencies are pinned by version and SHA-256; their existing publisher signatures are preserved.
 
-## Provenance and signing scope
+The submission file is deliberately unsigned. Microsoft signs the version distributed through the Store after identity verification and certification. Preparing an MSIX or a `.msixupload` does not itself produce a trusted signature or establish that certification will succeed.
 
-All jobs leading to a signing request run on GitHub-hosted runners. A clean checkout of a recorded commit builds Radici.exe, RadiciMotore.exe, Disinstalla.exe and the installer from the published C# sources. Third-party components are downloaded from official sources at pinned versions, with SHA-256 verification. Their existing signatures are preserved; no upstream DLL is signed under Radici's identity.
+Microsoft Store package signing is distinct from Authenticode signing of a standalone EXE installer. An unsigned EXE preview must remain labelled as such. A package is not described as Store-signed until the actual Store version and its signature have been verified.
 
-The workflow uses two signing requests: first the three Radici executables; then the installer built with those signed executables and their new hashes. Replacing embedded files after installer signing is forbidden. A release requires an exact expected signing certificate thumbprint, trusted Windows signature chain and timestamp. Missing service configuration or verification failures stop the signed release.
+## Isolated tests
 
-Signing is not enabled for pull requests, untrusted branches or automatic pushes. It requires a manual workflow on `main`, approved SignPath production policies and human approval for each request. API tokens belong only in GitHub Actions secrets and must never enter source, logs, artifacts or the genealogy data folder.
+The CI package test creates a temporary development certificate with a non-exportable private key only inside a disposable GitHub-hosted Windows VM. The test signs a separate development copy, installs and opens it, closes it gracefully, removes it and checks archive retention. The certificate and its temporary trust are removed at the end. The private key and test-signed package are never uploaded as release artifacts.
 
-Microsoft WebView2 SDK/runtime are proprietary Microsoft system components, included unchanged. Their eligibility under the Foundation's System Libraries exception must be reviewed; this policy does not assume an exception has been granted.
+No test certificate is created or trusted on the user's computer by this build workflow. Self-signing is suitable for explicitly trusted private test machines; it does not establish broad publisher trust or guarantee antivirus approval.
 
-## Privacy
+## Data and capabilities
 
-Genealogy is stored locally; family records, media and backups are not submitted to the build or signing services. Only public source and application build artifacts are involved. See [PRIVACY.md](PRIVACY.md) for Microsoft runtime update/diagnostic behaviour.
+Family records, media, backups, logs, keys and user-profile data must never enter public source, build inputs or release artifacts. Tests use only synthetic data. Full upstream and application source and component licences accompany application packages.
 
-References: [Foundation conditions](https://signpath.org/terms.html), [trusted GitHub builds](https://docs.signpath.io/trusted-build-systems/github).
+The MSIX requests `runFullTrust` for the Win32 host/worker and `unvirtualizedResources` to preserve the genealogy archive outside uninstallable package cache. These declarations require Store review; their presence is not claimed to be an approval. See [certification notes](store/CERTIFICATION.md) and [privacy](PRIVACY.md).
+
+References: [Microsoft Store submission](https://learn.microsoft.com/windows/apps/publish/get-started), [MSIX signing](https://learn.microsoft.com/windows/msix/package/sign-msix-package-guide).

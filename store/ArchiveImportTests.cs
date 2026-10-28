@@ -1,0 +1,18 @@
+// MIT. Synthetic files only: no genealogy database is queried by these copy tests.
+using System;using System.IO;using System.Collections.Generic;using System.Web.Script.Serialization;
+class ArchiveImportTests {
+ static int checks;static void Check(bool ok,string label){if(!ok)throw new Exception(label);checks++;}
+ static void Refuses(Action action,string label){bool refused=false;try{action();}catch(IOException){refused=true;}Check(refused,label);}
+ static string Fixture(string parent,string name){string path=Path.Combine(parent,name);Directory.CreateDirectory(Path.Combine(path,"Dati/tree"));Directory.CreateDirectory(Path.Combine(path,"Foto"));Directory.CreateDirectory(Path.Combine(path,"Impostazioni"));File.WriteAllText(Path.Combine(path,"Dati/trees.json"),"{\"active\":\"original\",\"trees\":[{\"id\":\"original\",\"name\":\"Albero sintetico\"}]}");File.WriteAllText(Path.Combine(path,"Dati/tree/sqlite.db"),"copy-fixture-not-opened-as-a-db");File.WriteAllText(Path.Combine(path,"Foto/prova.bin"),"synthetic photo");File.WriteAllText(Path.Combine(path,"Impostazioni/radici.lock"),"");return path;}
+ static int Main(string[] args){try{
+  string root=Path.GetFullPath(args[0]);Directory.CreateDirectory(root);string source=Fixture(root,"source"),destination=Path.Combine(root,"destination");Action<string> status=text=>{};Func<bool> keepGoing=()=>false;
+  Check(ArchiveImport.Copy(source,destination,status,keepGoing),"initial copy");Check(File.ReadAllText(Path.Combine(destination,"Foto/prova.bin"))=="synthetic photo","photo preserved");Check(File.ReadAllText(Path.Combine(source,"Foto/prova.bin"))=="synthetic photo","source preserved");
+  File.WriteAllText(Path.Combine(destination,"Foto/prova.bin"),"new user changes");Check(!ArchiveImport.Copy(source,destination,status,keepGoing),"existing tree skipped");Check(File.ReadAllText(Path.Combine(destination,"Foto/prova.bin"))=="new user changes","newer destination kept");
+  string busy=Fixture(root,"busy");using(var handle=new FileStream(Path.Combine(busy,"Impostazioni/radici.lock"),FileMode.Open,FileAccess.ReadWrite,FileShare.None))Refuses(()=>ArchiveImport.Copy(busy,Path.Combine(root,"busy-target"),status,keepGoing),"running source rejected");Check(!Directory.Exists(Path.Combine(root,"busy-target")),"no partial busy destination");
+  string foreign=Path.Combine(root,"foreign");Directory.CreateDirectory(foreign);File.WriteAllText(Path.Combine(foreign,"keep.txt"),"keep");Refuses(()=>ArchiveImport.Copy(source,foreign,status,keepGoing),"foreign data rejected");Check(File.ReadAllText(Path.Combine(foreign,"keep.txt"))=="keep","foreign data kept");
+  Refuses(()=>ArchiveImport.Copy(source,Path.Combine(source,"child"),status,keepGoing),"nested destination rejected");
+  string cancelled=Path.Combine(root,"cancelled");bool cancelledOk=false;try{ArchiveImport.Copy(source,cancelled,status,()=>true);}catch(OperationCanceledException){cancelledOk=true;}Check(cancelledOk,"cancellation reported");Check(!Directory.Exists(cancelled),"cancel leaves no destination");Check(Directory.GetDirectories(root,".radici-stage-first-use-*").Length==0,"temporary copy cleaned");
+  string incomplete=Fixture(root,"incomplete");File.Delete(Path.Combine(incomplete,"Dati/tree/sqlite.db"));Refuses(()=>ArchiveImport.Copy(incomplete,Path.Combine(root,"incomplete-target"),status,keepGoing),"incomplete database rejected");
+  Console.WriteLine(new JavaScriptSerializer().Serialize(new{passed=checks,uses_synthetic_files=true,source_preserved=true,newer_archive_preserved=true}));return 0;
+ }catch(Exception error){Console.Error.WriteLine(error);return 1;}}
+}

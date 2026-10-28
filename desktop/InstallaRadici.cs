@@ -1,7 +1,7 @@
 // MIT licensed per-user installer. Never formats drives or overwrites an archive.
 using System;using System.IO;using System.IO.Compression;using System.Reflection;using System.Diagnostics;using System.Threading;using System.Threading.Tasks;using System.Windows.Forms;using System.Drawing;using System.Security.Cryptography;using System.Collections.Generic;using System.Web.Script.Serialization;using Microsoft.Win32;
 class InstallaRadici {
- const string Release="5.0.0",Marker="radici-desktop-install.json",Product="radici-desktop-v1";
+ const string Release="5.0.1",Marker="radici-desktop-install.json",Product="radici-desktop-v1";
  static readonly string Local=Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
  static readonly string ProgramRoot=Path.Combine(Local,"Programs","Radici");
  static readonly string DataRoot=Path.Combine(Local,"Radici","Archivio");
