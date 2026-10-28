@@ -1,0 +1,97 @@
+{
+  "gramps_aio": {
+    "url": "https://github.com/gramps-project/gramps/releases/download/v6.0.8/GrampsAIO-6.0.8--1_win64.exe",
+    "sha256": "5c8e3a3f6ae7fec8b1ea4ac9e8eed2a1ee27292dab124ee24350f4d016b49674",
+    "filename": "gramps-aio-6.0.8.exe"
+  },
+  "gramps_source": {
+    "url": "https://codeload.github.com/gramps-project/gramps/zip/refs/tags/v6.0.8",
+    "sha256": "8c7cb322801934537be9781b2c3bf8d50595591494eed5ac6d76b0dc3eb0a81e",
+    "filename": "gramps-v6.0.8.zip"
+  },
+  "webview_sdk": {
+    "url": "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/1.0.2903.40/microsoft.web.webview2.1.0.2903.40.nupkg",
+    "sha256": "ef128016dd1e51c59178c827ed5b8aa3322c57afa8675d930f8109505542ad74",
+    "filename": "webview2-sdk.nupkg"
+  },
+  "webview_runtime": {
+    "url": "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/f699d81e-69ce-4b09-aa07-23ff2713045b/MicrosoftEdgeWebView2RuntimeInstallerX64.exe",
+    "sha256": "1c401b327fbc7bb9731b4e350a2194f083cbc3ede46508d52e1cae6610a39bea",
+    "filename": "webview2-runtime.exe"
+  },
+  "timeit": {
+    "url": "https://raw.githubusercontent.com/python/cpython/v3.14.4/Lib/timeit.py",
+    "sha256": "d738e7d47a9eaaaac095d79ed6129788efa1b262c8f3facb1bce827cd603d544",
+    "filename": "timeit.py"
+  },
+  "python_license": {
+    "url": "https://raw.githubusercontent.com/python/cpython/v3.14.4/LICENSE",
+    "sha256": "b0e25a78cffb43f4d92de8b61ccfa1f1f98ecbc22330b54b5251e7b6ba010231",
+    "filename": "PYTHON-LICENSE.txt"
+  },
+  "wheels": [
+    {
+      "name": "fonttools",
+      "version": "4.67.0",
+      "url": "https://files.pythonhosted.org/packages/3d/61/4161946319472aaa9b897bd18ad5108a5b10f5ebaa503d921a001ac4fff9/fonttools-4.67.0-py3-none-any.whl",
+      "sha256": "4304f03ed7f4ba000a8dcc941ad854bfa52e2f3b6112b8f099b6f431cf98e701",
+      "filename": "fonttools-4.67.0-py3-none-any.whl"
+    },
+    {
+      "name": "cairocffi",
+      "version": "1.7.1",
+      "url": "https://files.pythonhosted.org/packages/93/d8/ba13451aa6b745c49536e87b6bf8f629b950e84bd0e8308f7dc6883b67e2/cairocffi-1.7.1-py3-none-any.whl",
+      "sha256": "9803a0e11f6c962f3b0ae2ec8ba6ae45e957a146a004697a1ac1bbf16b073b3f",
+      "filename": "cairocffi-1.7.1-py3-none-any.whl"
+    },
+    {
+      "name": "cairosvg",
+      "version": "2.9.1",
+      "url": "https://files.pythonhosted.org/packages/41/51/8041c2e70649e5b7f2a0aedbbbd0609ac099cfaa0cbde2014279c9c05756/cairosvg-2.9.1-py3-none-any.whl",
+      "sha256": "f91c5628e834be024a0ed4544d76261cd84016a4c73bcdf26c386495825c05a1",
+      "filename": "cairosvg-2.9.1-py3-none-any.whl"
+    },
+    {
+      "name": "cssselect2",
+      "version": "0.10.1",
+      "url": "https://files.pythonhosted.org/packages/bd/59/6b1daa3b94de8970e2a2787ba73616c2d0675d2f948ef4cad8bef7f21bc6/cssselect2-0.10.1-py3-none-any.whl",
+      "sha256": "25cc4494d55985d6a6da359be48da6ce98c28dcbafa2314c383ace3fc32ec868",
+      "filename": "cssselect2-0.10.1-py3-none-any.whl"
+    },
+    {
+      "name": "defusedxml",
+      "version": "0.7.1",
+      "url": "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl",
+      "sha256": "a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61",
+      "filename": "defusedxml-0.7.1-py2.py3-none-any.whl"
+    },
+    {
+      "name": "tinycss2",
+      "version": "1.5.1",
+      "url": "https://files.pythonhosted.org/packages/60/45/c7b5c3168458db837e8ceab06dc77824e18202679d0463f0e8f002143a97/tinycss2-1.5.1-py3-none-any.whl",
+      "sha256": "3415ba0f5839c062696996998176c4a3751d18b7edaaeeb658c9ce21ec150661",
+      "filename": "tinycss2-1.5.1-py3-none-any.whl"
+    },
+    {
+      "name": "webencodings",
+      "version": "0.6.1",
+      "url": "https://files.pythonhosted.org/packages/77/c6/040cbc72480d789a5f40d63fb484d3106554c4dfa2d2b70ad5022057750f/webencodings-0.6.1-py3-none-any.whl",
+      "sha256": "7fab6269c8bf237c657876b52058ccb182e861518d1c695c1a9aaa8c1c105d5b",
+      "filename": "webencodings-0.6.1-py3-none-any.whl"
+    },
+    {
+      "name": "pycparser",
+      "version": "3.11",
+      "url": "https://files.pythonhosted.org/packages/90/11/0e6f11117525ff0eec40ebac3d313376f102df93ca44ad9e893ee85e4f89/pycparser-3.11-py3-none-any.whl",
+      "sha256": "51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80",
+      "filename": "pycparser-3.11-py3-none-any.whl"
+    },
+    {
+      "name": "pypdf",
+      "version": "6.10.0",
+      "url": "https://files.pythonhosted.org/packages/55/f2/7ebe366f633f30a6ad105f650f44f24f98cb1335c4157d21ae47138b3482/pypdf-6.10.0-py3-none-any.whl",
+      "sha256": "90005e959e1596c6e6c84c8b0ad383285b3e17011751cedd17f2ce8fcdfc86de",
+      "filename": "pypdf-6.10.0-py3-none-any.whl"
+    }
+  ]
+}

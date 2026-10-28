@@ -1,0 +1,54 @@
+name: radici
+services:
+  app:
+    build: .
+    image: radici-local:0.1.0
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${RADICI_PORT:-8787}:8787"
+    environment:
+      DATA_DIR: /data
+      MEDIA_DIR: /media
+      BACKUP_DIR: /backups
+      PASSWORD_FILE: /run/secrets/app_password
+      BACKUP_HOURS: ${BACKUP_HOURS:-24}
+      BACKUP_KEEP: ${BACKUP_KEEP:-14}
+    secrets:
+      - app_password
+    volumes:
+      - genealogy:/data
+      - media:/media
+      - backups:/backups
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 100
+    mem_limit: 1g
+    cpus: 2
+    stop_grace_period: 30s
+    networks: [private]
+  test:
+    image: radici-local:0.1.0
+    profiles: [test]
+    entrypoint: [python3, -m, unittest, discover, -v, -s, tests]
+    environment:
+      GRAMPSHOME: /tmp/config
+      HOME: /tmp
+    read_only: true
+    tmpfs: [/tmp:size=256m,mode=1777]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    networks: [private]
+volumes:
+  genealogy:
+  media:
+  backups:
+networks:
+  private:
+    internal: true
+secrets:
+  app_password:
+    file: ./.secrets/app_password.txt

@@ -1,0 +1,14 @@
+name: Native Gramps Linux checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Build pinned Gramps source image
+        run: docker build -t radici:test .
+      - name: Test real Gramps, relationships, security, layout and printing
+        run: docker run --rm --read-only --tmpfs /tmp:mode=1777 -e GRAMPSHOME=/tmp/config -e HOME=/tmp --entrypoint python3 radici:test -m unittest discover -v -s tests

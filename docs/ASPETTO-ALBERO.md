@@ -1,0 +1,23 @@
+# Aspetto dell’albero — revisione 4.1
+
+Questa nota descrive gli interventi implementati nella revisione 4.1 del 20 ottobre 2026. Sostituisce i precedenti criteri per una revisione futura.
+
+In ogni composizione **tutte le schede hanno la stessa larghezza e la stessa altezza**. La misura comune tiene conto dei nomi completi e delle date. Le due viste di lettura la calcolano sull’intero albero: resta uguale anche passando da una famiglia a un’altra o selezionando una persona isolata. Un nome lungo va a capo secondo le misure del carattere, senza ellissi o lettere eliminate. Non viene imposta una lunghezza massima di tre righe che potrebbe nascondere parte del nome. La larghezza resta contenuta, evitando che un solo nome molto lungo allarghi inutilmente ogni scheda.
+
+I nomi sono centrati. Le date presenti occupano una fascia con una linea di base comune; una data assente non produce scritte o segnaposto. Il carattere delle viste di lettura è **Crimson Text**, incluso nel programma. In stampa rimangono disponibili anche corsivo, calligrafico e semplice. I caratteri album sono esportati come tracciati vettoriali: non richiedono l’installazione del font sul PC che apre il PDF.
+
+Quando due coniugi sono vicini e allineati, un **ponte corto** unisce i lati interni delle schede; il collegamento verso i figli parte dal centro. Una coppia senza figli mostra soltanto il ponte, senza una falsa derivazione verso un figlio. Le unioni differenti conservano i propri figli e la stessa persona non viene duplicata. Negli altri casi i percorsi cercano spazio attorno alle schede. Linee grigie leggere, curve discrete e piccoli punti nelle giunzioni reali alleggeriscono lo schema. Puntini e trattini conservano il significato delle filiazioni da confermare e adottive; per casi misti o altre tipologie importate resta necessario consultare il dettaglio genealogico.
+
+La navigazione distingue tre azioni visibili:
+
+- **La famiglia** mostra il contesto della persona selezionata: genitori, unioni e figli. Toccando un’altra persona si segue la sua famiglia. La composizione sceglie una disposizione adatta allo spazio disponibile, in verticale o in orizzontale.
+- **Tutto l’albero** offre la panoramica, comprendendo anche le persone isolate. Il conteggio indica quante persone sono visibili.
+- **Sposta le schede** torna alle posizioni salvate e permette gli spostamenti manuali mediante la maniglia.
+
+Le prime due sono **viste temporanee di lettura**: non cambiano la parentela, le posizioni salvate, i blocchi manuali o la cronologia Annulla. Riordinare o cambiare direzione in queste viste non riscrive la disposizione manuale. Il trascinamento delle persone è riservato a «Sposta le schede»; nelle viste di lettura trascinare lo sfondo serve a muoversi. Le normali azioni di inserimento o modifica restano salvataggi espliciti dell’albero.
+
+La stampa può ricomporre coppie e rami per il foglio, lasciando intatte le coordinate salvate. La direzione automatica confronta le disposizioni; rimane possibile scegliere esplicitamente verticale oppure orizzontale. **Mantieni la dimensione desiderata dei nomi** conserva i punti richiesti e segnala se il foglio è insufficiente. **Adatta al foglio** riduce il disegno e mostra la grandezza effettiva dei caratteri. Con 45 persone non si garantisce una lettura comoda su un solo A4, tanto meno su 100 × 150 mm: scegliere un foglio più grande o stampare un ramo conserva nomi leggibili senza nasconderne altri. Non è ancora disponibile l’impaginazione automatica su più pagine.
+
+La verifica iniziale comprendeva **131 test nativi superati**; dopo la correzione delle fasce di lettura, la suite completa aggiornata conta **132 test superati**, sul runtime Gramps 6.0.8, senza errori né test saltati. Sono coperti misure comuni, conservazione dei nomi, limiti reali dei glifi, date allineate, ponti delle coppie senza false filiazioni, viste temporanee senza scritture e conservazione delle persone isolate. La regressione aggiuntiva controlla che dieci figli disposti su tre colonne non facciano slittare lateralmente le fasce durante l’evitamento delle collisioni, in entrambe le direzioni.
+
+Le prove non equivalgono a una garanzia di instradamento perfetto: più unioni, antenati condivisi, importazioni cicliche e posizioni manuali molto vincolate possono ancora produrre incroci o percorsi meno semplici. La selezione della famiglia, la vista locale e la stampa di un ramo aiutano a leggerli. Il blocco completo di Windows riferito in precedenza non è stato riprodotto; questa revisione grafica non ne dimostra la causa e non certifica la build Docker.

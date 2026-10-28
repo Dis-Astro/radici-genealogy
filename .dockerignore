@@ -1,0 +1,16 @@
+.git
+.secrets
+.env
+runtime
+__pycache__
+**/__pycache__
+*.zip
+!vendor/gramps-v6.0.8.zip
+
+.build
+Dati
+Foto
+Stampe
+Backup
+Registri
+Impostazioni
