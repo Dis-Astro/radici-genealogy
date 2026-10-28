@@ -3,7 +3,7 @@ FROM debian:bookworm-slim
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 LANG=C.UTF-8 \
     PYTHONPATH=/opt/gramps:/opt/radici:/opt/radici/python-libs GRAMPSHOME=/data/config HOME=/data
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 python3-gi python3-cairo python3-icu python3-cairosvg \
+    python3 python3-gi python3-cairo python3-icu python3-cairosvg python3-orjson \
     python3-fonttools python3-lxml python3-pil python3-pypdf2 gir1.2-gtk-3.0 fonts-dejavu-core ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd -g 10001 radici && useradd -u 10001 -g radici -d /data radici
