@@ -52,6 +52,7 @@ class RadiciDesktop : Form {
   program=folder;archive=data;smoke=report;screenshot=image;smokeExit=exitAfterSmoke;wake=signal;
   Text="Radici · La storia della tua famiglia";StartPosition=FormStartPosition.CenterScreen;
   Size=new Size(1280,850);MinimumSize=new Size(900,650);Font=new Font("Segoe UI",11);BackColor=Color.FromArgb(246,246,239);
+  if(!string.IsNullOrEmpty(screenshot))ClientSize=new Size(1440,960);
   try{Icon=new Icon(Path.Combine(program,"Radici.ico"));}catch{}
   var bar=new FlowLayoutPanel{Dock=DockStyle.Top,Height=52,Padding=new Padding(10,6,6,4),BackColor=Color.White,WrapContents=false};
   foreach(string title in new[]{"Le mie stampe","Copia di sicurezza","Cartella dei dati"}){
