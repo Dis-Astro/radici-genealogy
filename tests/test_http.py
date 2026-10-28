@@ -55,8 +55,12 @@ class HttpTests(unittest.TestCase):
 
     def test_csrf_origin_and_host_protection(self):
         self.login()
-        self.assertEqual(self.request('/api/command',{'action':'layout','revision':0},{'X-CSRF-Token':''})[0],403)
-        self.assertEqual(self.request('/api/command',{'action':'layout','revision':0},{'Origin':'https://evil.example'})[0],403)
+        for _ in range(5):
+            for headers in ({'X-CSRF-Token':''},{'Origin':'https://evil.example'},{'Host':'evil.example'}):
+                code, _, body = self.request('/api/command',{'action':'layout','revision':0},headers)
+                self.assertEqual(code,403)
+                self.assertIn('error',json.loads(body))
+        self.assertEqual(self.s.state()['revision'],0)
         self.assertEqual(self.request('/api/state',headers={'Host':'evil.example'})[0],403)
 
     def test_no_path_traversal_or_unauthenticated_export(self):

@@ -112,6 +112,13 @@ def build_server(service, password, address=('127.0.0.1', 8787), allowed_hosts=N
 
         def do_POST(self):
             try:
+                length = int(self.headers.get('Content-Length','0'))
+                if not 0 < length <= 12*1024*1024:
+                    return self.send(413,{'error':'Richiesta troppo grande (massimo 12 MB).'} )
+                # Consume the bounded request before rejecting its headers. Closing
+                # a socket with unread POST bytes can reset the response on Windows.
+                # No JSON is interpreted and no action runs before the checks below.
+                raw = self.rfile.read(length)
                 if not self.valid_host():
                     return self.send(403,{'error':'Host non consentito.'})
                 # Same-origin policy also rejects cross-site form posts and DNS rebinding.
@@ -120,10 +127,7 @@ def build_server(service, password, address=('127.0.0.1', 8787), allowed_hosts=N
                     return self.send(403,{'error':'Origine non consentita.'})
                 if self.headers.get('Content-Type','').split(';')[0] != 'application/json':
                     return self.send(415,{'error':'Richiesto JSON.'})
-                length = int(self.headers.get('Content-Length','0'))
-                if not 0 < length <= 12*1024*1024:
-                    return self.send(413,{'error':'Richiesta troppo grande (massimo 12 MB).'} )
-                data = json.loads(self.rfile.read(length))
+                data = json.loads(raw)
                 if not isinstance(data,dict):
                     raise ValueError('Richiesta non valida.')
                 path = urlsplit(self.path).path
