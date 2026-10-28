@@ -160,7 +160,9 @@ jobs:
         with:
           name: radici-msix-result
           path: |
-            .build/windows/store-output/*
+            .build/windows/store-output/*-STORE-NON-FIRMATO.msixupload
+            .build/windows/store-output/*-STORE-NON-FIRMATO.msixupload.sha256
+            .build/windows/store-output/msix-report.json
             .build/windows/store-test/integration-report.json
             .build/windows/store-test/window-ready.json
             .build/windows/store-test/window.png
