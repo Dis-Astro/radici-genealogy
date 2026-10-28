@@ -100,7 +100,9 @@ def prepare():
         if path.name.startswith('$') or path.name in ('uninstall.exe', 'gramps.exe', 'grampsd.exe', 'grampsw.exe', 'pip.exe'):
             continue
         if path.is_dir():
-            shutil.copytree(path, runtime / path.name, dirs_exist_ok=True, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', 'pip', 'ensurepip'))
+            # AIO ships some importable modules as bytecode only, e.g. PIL.
+            # Preserve upstream bytecode; it is not a generated Radici cache.
+            shutil.copytree(path, runtime / path.name, dirs_exist_ok=True, ignore=shutil.ignore_patterns('pip', 'ensurepip'))
         else:
             shutil.copy2(path, runtime / path.name)
     if not (runtime / 'libpython3.14.dll').is_file() or not (runtime / 'lib/library.zip').is_file():
@@ -176,14 +178,14 @@ def installer(development_unsigned=False):
     files = {}
     def add(name, path):
         safe_zip_name(name)
-        if set(Path(name).parts) & (PRIVATE_PARTS - {'runtime'}) or not path.is_file() or path.is_symlink():
+        if set(Path(name).parts) & (PRIVATE_PARTS - {'runtime', '__pycache__'}) or not path.is_file() or path.is_symlink():
             raise ValueError('Unsafe package file: ' + name)
         files[name] = path
     for name in ('Radici.exe', 'Disinstalla.exe'):
         add(name, binaries_root / name)
     add('Radici.ico', ROOT / 'desktop/Radici.ico')
     for path in sorted(PROGRAM.rglob('*')):
-        if path.is_file() and '__pycache__' not in path.parts and path.suffix != '.pyc':
+        if path.is_file() and (path.relative_to(PROGRAM).parts[0] == 'Runtime' or ('__pycache__' not in path.parts and path.suffix != '.pyc')):
             add('Programma/' + path.relative_to(PROGRAM).as_posix(), path)
     sdk = DEPS / 'sdk'
     for name in ('Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll'):
